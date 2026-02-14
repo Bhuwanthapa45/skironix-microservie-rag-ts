@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skironix AI Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen p-10">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8 text-blue-400">✈️ Skironix AI Lab</h1>
+
+        <div class="bg-slate-800 p-6 rounded-lg mb-8 border border-slate-700">
+            <h2 class="text-xl font-semibold mb-4">1. Ingest Regulation PDF</h2>
+            <form id="uploadForm" class="flex gap-4">
+                <input type="file" name="pdf" accept=".pdf" class="block w-full text-sm text-slate-300
+                  file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0
+                  file:text-sm file:font-semibold file:bg-blue-600 file:text-white
+                  hover:file:bg-blue-700"/>
+                <button type="submit" class="bg-green-600 px-6 py-2 rounded font-bold hover:bg-green-500">Upload</button>
+            </form>
+            <p id="uploadStatus" class="mt-2 text-sm text-gray-400"></p>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-lg border border-slate-700 h-[500px] flex flex-col">
+            <h2 class="text-xl font-semibold mb-4">2. Test Compliance Chat</h2>
+            <div id="chatBox" class="flex-1 overflow-y-auto bg-slate-900 p-4 rounded mb-4 border border-slate-700 space-y-4">
+                </div>
+            <div class="flex gap-2">
+                <input type="text" id="questionInput" placeholder="Ask about regulations..." 
+                    class="flex-1 bg-slate-700 border border-slate-600 rounded px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                <button onclick="askQuestion()" class="bg-blue-600 px-6 py-2 rounded font-bold hover:bg-blue-500">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple JS logic to handle API calls
+        const uploadForm = document.getElementById('uploadForm');
+        const status = document.getElementById('uploadStatus');
+
+        uploadForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+            status.innerText = "Uploading & Indexing...";
+            
+            const res = await fetch('/api/ingest', { method: 'POST', body: formData });
+            const data = await res.json();
+            status.innerText = res.ok ? "✅ Success! " + data.pages + " pages indexed." : "❌ Error";
+        };
+
+        async function askQuestion() {
+            const input = document.getElementById('questionInput');
+            const chatBox = document.getElementById('chatBox');
+            const question = input.value;
+            if (!question) return;
+
+            // Add User Message
+            chatBox.innerHTML += `<div class="text-right"><span class="bg-blue-600 px-3 py-1 rounded inline-block">${question}</span></div>`;
+            input.value = "";
+
+            // Call API
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ question })
+            });
+            const data = await res.json();
+
+            // Add AI Message
+            chatBox.innerHTML += `<div class="text-left"><span class="bg-slate-700 px-3 py-1 rounded inline-block text-gray-200">${data.answer}</span></div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+</html>
